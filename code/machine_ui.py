@@ -166,15 +166,15 @@ class MachineUI:
                 self.empty_fuel_surf.get_rect(center=self.machine.rect.center - self.cam_offset)
             )
 
-    def render(self) -> None:
+    def render(self, bg_color: str | None=None, outline_color: str | None=None) -> None:
         self.bg_rect = self.update_bg_rect()
         self.active = self.rect_in_sprite_radius(self.player, self.bg_rect, rect_world_space=False)
         if self.active:
-            self.gen_bg(self.bg_rect, color='black', alpha=200) 
-            self.gen_outline(self.bg_rect)
+            self.gen_bg(self.bg_rect, color=bg_color if bg_color else 'black', alpha=200)
+            self.gen_outline(self.bg_rect, color=outline_color if outline_color else 'black')
             self.render_slots()
 
-    def update(self) -> None:
+    def update(self, bg_color: str | None=None, outline_color: str | None=None) -> None:
         self.mouse_hover = self.machine.rect.collidepoint(self.mouse.xy_world)
         self.highlight_surf_when_hovered()
 
@@ -183,6 +183,6 @@ class MachineUI:
         elif self.keyboard.held_keys[self.key_close_ui]:
             self.active = False
         else:
-            self.render()
+            self.render(bg_color, outline_color)
 
         self.update_fuel_status()

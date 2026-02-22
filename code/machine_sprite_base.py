@@ -2,7 +2,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from main import Main, Keyboard, Mouse
-    from input_manager import InputManager
     from player import Player
     import numpy as np
     from ui import UI
@@ -12,7 +11,7 @@ import pygame as pg
 from dataclasses import dataclass, field
 from abc import ABC
 
-from settings import Z_LAYERS, GRAVITY, TILE_SIZE, BIOME_WIDTH, TILE_SIZE
+from settings import Z_LAYERS, TILE_SIZE, TILE_SIZE
 from sprite_base_classes import Sprite
 
 @dataclass(slots=True)
@@ -32,6 +31,7 @@ class Inv:
         if self.input_slots:
             for slot in self.input_slots.values():
                 yield slot
+                
         yield self.output_slot
 
 
@@ -46,16 +46,16 @@ class Machine(Sprite, ABC):
         ui: UI | None=None
     ):
         super().__init__(xy=xy, image=image, sprite_groups=sprite_groups, z=Z_LAYERS['main'])
-        self.active: bool = False if not save_data else save_data['active']
+        self.tile_xy = (xy[0] // TILE_SIZE, xy[1] // TILE_SIZE)
+        print(xy, self.tile_xy)
 
         self.game_obj = game_obj
 
         self.screen: pg.Surface = game_obj.screen
         self.cam_offset: pg.Vector2 = game_obj.cam.offset
 
-        input_manager: InputManager = game_obj.input_manager
-        self.keyboard: Keyboard = input_manager.keyboard
-        self.mouse: Mouse = input_manager.mouse
+        self.keyboard: Keyboard = game_obj.input_manager.keyboard
+        self.mouse: Mouse = game_obj.input_manager.mouse
 
         self.player: Player = game_obj.player
 
@@ -75,6 +75,8 @@ class Machine(Sprite, ABC):
             self.output = save_data['output'] if save_data else {'item': None, 'amount': 0}
 
             self.pipe_connections = {}
+            
+        self.active: bool = False if not save_data else save_data['active']
 
     def init_ui(self, ui_cls: MachineUI) -> None:
         self.ui = ui_cls(machine=self) # not initializing self.ui until the machine variant (burner/electric) is determined

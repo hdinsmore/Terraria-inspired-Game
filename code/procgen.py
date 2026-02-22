@@ -6,12 +6,11 @@ if TYPE_CHECKING:
 import pygame as pg
 import numpy as np
 import noise
-from random import randint, choice
+from random import randint
 from dataclasses import dataclass
 
-from settings import TILES, RAMP_TILES, TILE_SIZE, MAP_SIZE, CELL_SIZE, RES, BIOMES, BIOME_WIDTH, Z_LAYERS, PRODUCTION, \
+from settings import TILES, RAMP_TILES, TILE_SIZE, MAP_SIZE, RES, BIOMES, BIOME_WIDTH, PRODUCTION, \
 ELECTRICITY, PIPE_TRANSPORT_DIRS, LOGISTICS, STORAGE, LIQUIDS
-from helper_functions import load_image
 
 # TODO: refine the ore distribution to generate clusters of a particular gemstone rather than randomized for each tile 
 class ProcGen:

@@ -1,15 +1,12 @@
 import pygame as pg
 import sys
 import os
-from os.path import join
 import json
 from collections import defaultdict
-import re
 
-from settings import RES, FPS, Z_LAYERS, MAP_SIZE, MAP_SIZE, TILE_SIZE
+from settings import RES, FPS, MAP_SIZE, MAP_SIZE, TILE_SIZE
 from procgen import ProcGen
 from player import Player
-from inventory import SpriteInventory, PlayerInventory
 from graphics_engine import GraphicsEngine, Camera
 from asset_manager import AssetManager
 from chunk_manager import ChunkManager
@@ -18,7 +15,7 @@ from sprite_manager import SpriteManager
 from input_manager import InputManager
 from ui import UI
 from item_placement import ItemPlacement
-from helper_functions import load_subfolders, cls_name_to_str
+from helper_functions import cls_name_to_str
 
 class Main:
     def __init__(self):

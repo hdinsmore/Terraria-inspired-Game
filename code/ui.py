@@ -2,13 +2,10 @@ from __future__ import annotations
 from typing import Sequence
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from main import Main
     from input_manager import InputManager
-    from sprite_manager import SpriteManager
-    from player import Player
-    from procgen import ProcGen
 
 import pygame as pg
-from collections import defaultdict
 
 from settings import TILE_SIZE, RES
 from mini_map import MiniMap
@@ -25,8 +22,8 @@ class UI:
         assets = game_obj.asset_manager.assets
         self.assets, self.fonts, self.colors = assets, assets['fonts'], assets['colors']
 
-        input_manager = game_obj.input_manager
-        self.keyboard, self.mouse = input_manager.keyboard, input_manager.mouse
+        input_manager: InputManager = game_obj.input_manager
+        self.keyboard, self.mouse = game_obj.input_manager.keyboard, game_obj.input_manager.mouse
 
         self.player = game_obj.player
         self.inventory = self.player.inventory
