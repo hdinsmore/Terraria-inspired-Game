@@ -1,9 +1,10 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from input_manager import InputManager
-    import numpy as np
+    from main import Main
+    from asset_manager import AssetManager
     from sprite_manager import SpriteManager
+    from input_manager import Keyboard, Mouse
 
 import pygame as pg
 from random import choice
@@ -27,16 +28,17 @@ class Colonist(AnimatedSprite):
     ):
         super().__init__(game_obj, xy, frames, sprite_groups, move_speed, animation_speed)
         self.spawn_point = xy
-        self.graphics = game_obj.asset_manager.assets['graphics']
-        self.sprite_manager = game_obj.sprite_manager
-        proc_gen = game_obj.proc_gen
-        self.biome_order, self.idxs_to_biomes = proc_gen.biome_order, proc_gen.idxs_to_biomes
-        self.save_data = save_data
-        
-        self.current_biome = game_obj.proc_gen.current_biome
+        self.asset_manager: AssetManager = game_obj.asset_manager
+        self.sprite_manager: SpriteManager = game_obj.sprite_manager
 
-        input_manager = game_obj.input_manager
-        self.keyboard, self.mouse = input_manager.keyboard, input_manager.mouse
+        self.biome_order: dict[str, int] = game_obj.proc_gen.biome_order
+        self.idxs_to_biomes: dict[int, str] = game_obj.proc_gen.idxs_to_biomes
+        self.save_data: dict[str, any] | None = save_data
+        
+        self.current_biome: str = game_obj.proc_gen.current_biome
+
+        self.keyboard: Keyboard = game_obj.input_manager.keyboard
+        self.mouse: Mouse = game_obj.input_manager.mouse
 
         self.facing_left = save_data['facing left'] if save_data else True
         self.grounded = False
@@ -51,7 +53,7 @@ class Colonist(AnimatedSprite):
 
         self.underwater = False
         self.oxygen_lvl, self.max_oxygen_lvl = 8, 8
-        self.oxygen_icon = self.graphics['icons']['oxygen']
+        self.oxygen_icon = self.asset_manager.get_image('oxygen')
         self.oxygen_icon_w, self.oxygen_icon_h = self.oxygen_icon.get_size()
 
         self.alarms = {

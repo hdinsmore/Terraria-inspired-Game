@@ -1,11 +1,9 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from input_manager import InputManager
-    from player import Player
-    from inventory import PlayerInventory
-    from sprite_manager import SpriteManager
     from ui import UI
+    from player import Player
+    from main import Main
     
 import pygame as pg
 from dataclasses import dataclass
@@ -24,29 +22,24 @@ class InventoryDimensions:
 
 
 class InventoryUI:
-    def __init__(self, ui: UI, input_manager: InputManager, sprite_manager: SpriteManager):  
-        self.screen = ui.screen
-        self.cam_offset = ui.cam_offset
-        self.graphics = ui.assets['graphics']
-        self.fonts = ui.assets['fonts']
-        self.colors = ui.assets['colors']
-
-        self.top = ui.mini_map.outline_h + ui.mini_map.padding
+    def __init__(self, ui: UI, game_obj: Main):  
+        self.screen: pg.Surface = ui.screen
+        self.cam_offset: pg.Vector2 = ui.cam_offset
+        self.top: int = ui.mini_map.outline_h + ui.mini_map.padding
 
         self.player: Player = ui.player
-        self.inventory: PlayerInventory = ui.player.inventory
 
-        self.gen_outline = ui.gen_outline
-        self.gen_bg = ui.gen_bg
-        self.render_inv_item_name = ui.render_inv_item_name
-        self.get_scaled_image = ui.get_scaled_image
-        self.get_grid_xy = ui.get_grid_xy
-        self.render_item_amount = ui.render_item_amount
+        self.gen_outline: callable = ui.gen_outline
+        self.gen_bg: callable = ui.gen_bg
+        self.render_inv_item_name: callable = ui.render_inv_item_name
+        self.get_scaled_image: callable = ui.get_scaled_image
+        self.get_grid_xy: callable = ui.get_grid_xy
+        self.render_item_amount: callable = ui.render_item_amount
 
-        self.mech_sprites = sprite_manager.mech_sprites
-        self.get_sprites_in_radius = sprite_manager.get_sprites_in_radius
+        self.mech_sprites: pg.sprite.Group = game_obj.sprite_manager.mech_sprites
+        self.get_sprites_in_radius: callable = game_obj.sprite_manager.get_sprites_in_radius
 
-        self.num_slots = ui.inventory.num_slots
+        self.num_slots: int = game_obj.player.inventory.num_slots
         self.num_cols = 5
         self.num_rows_expanded = self.num_slots // self.num_cols
         self.num_rows_closed = 2
@@ -77,9 +70,7 @@ class InventoryUI:
             self.num_rows
         )
 
-        self.item_drag = ItemDrag(ui, self, inv_dims, sprite_manager, input_manager)
-
-        self.item_placement = None # not initialized yet
+        self.item_drag = ItemDrag(ui, self, inv_dims, game_obj.sprite_manager, game_obj.input_manager)
 
     def update_dimensions(self) -> None:
         if self.expand:
@@ -109,14 +100,14 @@ class InventoryUI:
     def check_slot_highlight(self, slot: pg.Rect, col_idx: int, row_idx: int) -> None:
         if self.player.item_holding:
             slot_idx = (row_idx * self.num_cols) + col_idx
-            if slot_idx <= 10 and slot_idx == self.inventory.index:
+            if slot_idx <= 10 and slot_idx == self.player.inventory.index:
                 hl_surf = pg.Surface(slot.size - pg.Vector2(self.border_width * 2, self.border_width * 2))
                 hl_surf.fill('silver')
                 hl_surf.set_alpha(25)
                 self.screen.blit(hl_surf, hl_surf.get_rect(topleft=slot.topleft + pg.Vector2(self.border_width, self.border_width)))
         
     def render_icons(self) -> None:
-        inv_contents = list(self.inventory.contents.items()) # storing in a list to avoid the 'dictionary size changed during iteration' error when removing placed items
+        inv_contents = list(self.player.inventory.contents.items()) # storing in a list to avoid the 'dictionary size changed during iteration' error when removing placed items
         for item_name, item_data in inv_contents if self.expand else inv_contents[:self.max_idx_closed]:
             try:
                 surf = self.get_item_surf(item_name)

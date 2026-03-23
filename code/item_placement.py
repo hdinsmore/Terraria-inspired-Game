@@ -1,46 +1,41 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from input_manager import InputManager
+    from main import Main
+    from input_manager import Mouse, Keyboard
     from sprite_manager import SpriteManager
     from player import Player
-    from procgen import ProcGen
-    from ui import UI
+    from asset_manager import AssetManager
 
 import pygame as pg
 import numpy as np
 from collections import defaultdict
 from math import ceil
 
-from settings import MAP_SIZE, TILE_SIZE, TILES, RAMP_TILES, TILE_REACH_RADIUS, Z_LAYERS, OBJ_ITEMS, PRODUCTION, PIPE_TRANSPORT_DIRS, LIQUIDS
+from settings import MAP_SIZE, TILE_SIZE, TILES, RAMP_TILES, TILE_REACH_RADIUS, OBJ_ITEMS, PRODUCTION, PIPE_TRANSPORT_DIRS, LIQUIDS
 
 class ItemPlacement:
     def __init__(self, game_obj: Main):
         self.screen: pg.Surface = game_obj.screen
         self.cam_offset: pg.Vector2 = game_obj.cam.offset
-
-        proc_gen: ProcGen = game_obj.proc_gen
-        self.tile_map: np.ndarray = proc_gen.tile_map
-        self.height_map: np.ndarray = proc_gen.height_map
-        self.names_to_ids: dict[str, int] = proc_gen.names_to_ids
-
-        self.collision_map: dict[tuple[int, int], pg.Rect] = game_obj.physics_engine.collision_map
+        self.asset_manager: AssetManager = game_obj.asset_manager
 
         self.sprite_manager: SpriteManager = game_obj.sprite_manager
         self.rect_in_sprite_radius: callable = self.sprite_manager.rect_in_sprite_radius
         self.items_init_when_placed: dict[str, pg.sprite.Sprite] = self.sprite_manager.items_init_when_placed
 
-        input_manager: InputManager = game_obj.input_manager
-        self.keyboard: Keyboard = input_manager.keyboard
-        self.mouse: Mouse = input_manager.mouse
+        self.tile_map: np.ndarray = game_obj.proc_gen.tile_map
+        self.height_map: np.ndarray = game_obj.proc_gen.height_map
+        self.names_to_ids: dict[str, int] = game_obj.proc_gen.names_to_ids
+        self.collision_map: dict[tuple[int, int], pg.Rect] = game_obj.physics_engine.collision_map
 
-        self.player: Player = game_obj.player
+        self.keyboard: Keyboard = game_obj.input_manager.keyboard
+        self.mouse: Mouse = game_obj.input_manager.mouse
+        self.player: Player = None # not initialized yet
 
-        self.graphics: dict[str, pg.Surface] = game_obj.asset_manager.assets['graphics']
-        ui: UI = game_obj.ui
-        self.gen_outline: callable = ui.gen_outline 
-        self.gen_bg: callable = ui.gen_bg,
-        self.render_item_amount: callable = ui.render_item_amount
+        self.gen_outline: callable = game_obj.ui.gen_outline 
+        self.gen_bg: callable = game_obj.ui.gen_bg,
+        self.render_item_amount: callable = game_obj.ui.render_item_amount
        
         self.obj_map = np.full(MAP_SIZE, None, dtype=object) # stores every tile an object overlaps with (tile_map only stores the topleft since it controls rendering)
         self.machine_ids = {self.names_to_ids[k] for k in PRODUCTION} | {self.names_to_ids['item extended']}

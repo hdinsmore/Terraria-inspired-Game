@@ -13,9 +13,10 @@ BIOMES = {
         'height map': {'scale': 325, 'octaves': 5, 'persistence': 1.6, 'lacunarity': 2.1},
         'cave map': {'scale': 30.0, 'octaves': 5, 'persistence': 2.0, 'lacunarity': 2.3, 'threshold': 0.4},
         'elevation': {'top': 0, 'bottom': 70}, 
-        'tile probs': {'stone': 40, 'dirt': 20, 'coal': 15, 'tin': 3, 'iron': 13, 'copper': 10},
+        'tile probs': {'stone': 40, 'dirt': 20, 'coal': 15, 'iron': 13, 'copper': 10},
         'liquid probs': {'water': 3, 'lava': 5},
     }, 
+
     'desert': {
         'height map': {'scale': 425, 'octaves': 4, 'persistence': 0.9, 'lacunarity': 1.4},
         'cave map': {'scale': 60.0, 'octaves': 3, 'persistence': 0.7, 'lacunarity': 0.9, 'threshold': 0.6},
@@ -23,15 +24,17 @@ BIOMES = {
         'tile probs': {'sand': 40, 'sandstone': 20, 'clay': 3, 'dirt': 10, 'desert fossil': 3, 'copper': 12, 'iron': 8},
         'liquid probs': {'oil': 7, 'lava': 5},
     },
+
     'forest': {
         'height map': {'scale': 400, 'octaves': 3, 'persistence': 1.2, 'lacunarity': 2.0},
         'cave map': {'scale': 30.0, 'octaves': 4, 'persistence': 1.6, 'lacunarity': 1.3, 'threshold': 0.55},
         'elevation': {'top': 70, 'bottom': 110},
-        'tile probs': {'dirt': 35, 'stone': 25, 'clay': 7, 'tin': 5, 'coal': 9, 'iron': 11, 'copper': 8},
+        'tile probs': {'dirt': 35, 'stone': 25, 'clay': 7, 'coal': 9, 'iron': 11, 'copper': 8},
         'liquid probs': {'water': 7, 'lava': 2},
         'tree probs': 30,
         'lake prob': 35
     },
+
     'taiga': {
         'height map': {'scale': 375, 'octaves': 4, 'persistence': 1.3, 'lacunarity': 1.6},
         'cave map': {'scale': 40.0, 'octaves': 4, 'persistence': 1.6, 'lacunarity': 1.9, 'threshold': 0.4},
@@ -41,13 +44,15 @@ BIOMES = {
         'tree probs': 20,
         'lake prob': 25
     },
+
     'tundra': {
         'height map': {'scale': 450, 'octaves': 3, 'persistence': 1.2, 'lacunarity': 1.5},
         'cave map': {'scale': 70.0, 'octaves': 2, 'persistence': 0.6, 'lacunarity': 1.8, 'threshold': 0.35},
         'elevation': {'top': 90, 'bottom': 125},
-        'tile probs': {'ice': 30, 'stone': 25, 'dirt': 15, 'tin': 2, 'coal': 11, 'copper': 6, 'iron': 11},
+        'tile probs': {'ice': 30, 'stone': 25, 'dirt': 15, 'coal': 11, 'copper': 6, 'iron': 11},
         'liquid probs': {'water': 5, 'oil': 7}
     }, 
+
     'underworld': {
         'height map': {'scale': 300, 'octaves': 6, 'persistence': 1.7, 'lacunarity': 2.0},
         'cave map': {'scale': 90.0, 'octaves': 6, 'persistence': 2.5, 'lacunarity': 2.4, 'threshold': 0.3},
@@ -65,8 +70,6 @@ TILES = {
     'ice': {'hardness': 200, 'rgb': (82, 71, 69)},
     'sand': {'hardness': 100, 'rgb': (214, 188, 150)},
     'clay': {'hardness': 150, 'rgb': (192, 136, 119)},
-    'tin': {'ore': True, 'hardness': 200, 'rgb': (205, 206, 181)},
-    'defiled stone': {'hardness': 250, 'rgb': (157, 157, 157)},
     'stone': {'hardness': 300, 'rgb': (100, 100, 100)},
     'desert fossil': {'hardness': 400, 'rgb': (173, 159, 139)},
     'coal': {'hardness': 450, 'rgb': (37, 40, 41)},

@@ -5,6 +5,7 @@ if TYPE_CHECKING:
     from inventory_ui import InventoryUI, InventoryDimensions
     from sprite_manager import SpriteManager
     from input_manager import InputManager
+    from asset_manager import AssetManager
 
 import pygame as pg
 
@@ -19,9 +20,10 @@ class ItemDrag:
         sprite_manager: SpriteManager, 
         input_manager: InputManager
     ):
-        self.screen = ui.screen
-        self.cam_offset = ui.cam_offset
-        self.graphics = ui.assets['graphics']
+        self.screen: pg.Surface = ui.screen
+        self.cam_offset: pg.Vector2 = ui.cam_offset
+        self.asset_manager: AssetManager = ui.asset_manager
+
         self.player = ui.player
         self.get_grid_xy = ui.get_grid_xy
         self.inv_ui = inv_ui
@@ -172,7 +174,7 @@ class ItemDrag:
             for slot in machine.inv:
                 if isinstance(slot, dict):
                     for s in slot.values():
-                        if s.amount and rect.collidepoint(self.mouse.xy_screen):
+                        if s.amount and s.rect.collidepoint(self.mouse.xy_screen):
                             machine.ui.extract_item(s, 'left' if l_click else 'right')
                             return
                 else:

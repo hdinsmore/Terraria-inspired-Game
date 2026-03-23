@@ -3,7 +3,9 @@ from typing import Sequence
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from main import Main
-    from input_manager import InputManager
+    from input_manager import Keyboard, Mouse
+    from player import Player
+    from asset_manager import AssetManager
 
 import pygame as pg
 
@@ -19,24 +21,21 @@ class UI:
 
         self.screen: pg.Surface = game_obj.screen
         self.cam_offset: pg.Vector2 = game_obj.cam.offset
-        assets = game_obj.asset_manager.assets
-        self.assets, self.fonts, self.colors = assets, assets['fonts'], assets['colors']
-
-        input_manager: InputManager = game_obj.input_manager
-        self.keyboard, self.mouse = game_obj.input_manager.keyboard, game_obj.input_manager.mouse
-
-        self.player = game_obj.player
-        self.inventory = self.player.inventory
+        self.asset_manager = game_obj.asset_manager
+        
+        self.player: Player = game_obj.player
+        self.keyboard: Keyboard = game_obj.input_manager.keyboard
+        self.mouse: Mouse = game_obj.input_manager.mouse
 
         self.save_data = game_obj.save_data['ui'] if game_obj.save_data is not None else None
 
         self.mini_map = MiniMap(game_obj, self)
         self.mouse_grid = MouseGrid(self)
-        self.inventory_ui = InventoryUI(self, input_manager, game_obj.sprite_manager)
+        self.inventory_ui = InventoryUI(self, game_obj)
 
         self.craft_window = CraftWindow(self, game_obj.sprite_manager.crafting.craft_item)
 
-        self.HUD = HUD(self.screen, self.assets, self.craft_window.outline_rect.right, self.gen_outline, self.gen_bg)
+        self.HUD = HUD(self.screen, self.asset_manager, self.craft_window.outline_rect.right, self.gen_outline, self.gen_bg)
 
         for key in ('expand inventory ui', 'toggle inventory ui', 'toggle craft window ui', 'toggle mini map ui', 'toggle HUD ui'):
             setattr(self, '_'.join(key.split(' ')), self.keyboard.key_bindings[key])
@@ -44,7 +43,7 @@ class UI:
         self.active_item_names = []
     
     def get_craft_window_height(self) -> int:
-        inv_grid_height = self.inventory_ui.slot_len * (self.inventory.num_slots // self.inventory_ui.num_cols)
+        inv_grid_height = self.inventory_ui.slot_len * (self.player.inventory.num_slots // self.inventory_ui.num_cols)
         return inv_grid_height + self.mini_map.outline_h + self.mini_map.padding
 
     def gen_outline(
@@ -61,8 +60,10 @@ class UI:
             rect.topleft - pg.Vector2(padding, padding), 
             (rect.width + (padding * 2), rect.height + (padding * 2))
         )
+
         if draw:
             pg.draw.rect(self.screen, color, outline, width, radius)
+            
         if return_outline: # use the outline as the base rect for creating another outline
             return outline
 
@@ -134,7 +135,7 @@ class UI:
             self.HUD.render = not self.HUD.render
 
     def render_item_amount(self, amount: int, coords: tuple[int, int], add_x_offset: bool=True) -> None:
-        image = self.assets['fonts']['number'].render(str(amount), False, self.assets['colors']['text'])
+        image = self.asset_manager.fonts['number'].render(str(amount), False, self.asset_manager.colors['text'])
         x_offset = 0
         if add_x_offset: # making it optional in case the amount will never reach a lengthy value
             num_digits = len(str(amount))
@@ -177,15 +178,19 @@ class MouseGrid:
 
 
 class HUD:
-    def __init__(self, screen: pg.Surface, assets: dict[str, dict[str, any]], craft_window_right: int, gen_outline: callable, gen_bg: callable):
+    def __init__(
+        self, 
+        screen: pg.Surface, 
+        asset_manager: AssetManager, 
+        craft_window_right: int, 
+        gen_outline: callable, 
+        gen_bg: callable
+    ):
         self.screen = screen
-        self.assets = assets
+        self.asset_manager = asset_manager
         self.craft_window_right = craft_window_right
         self.gen_outline = gen_outline
         self.gen_bg = gen_bg
-
-        self.colors = self.assets['colors']
-        self.fonts = self.assets['fonts']
 
         self.height = TILE_SIZE * 3
         self.width = RES[0] // 2
@@ -198,7 +203,7 @@ class HUD:
         self.gen_bg(self.rect)
         
         outline1 = self.gen_outline(self.rect, draw = False, return_outline = True)
-        outline2 = self.gen_outline(outline1, draw = True)
+        self.gen_outline(outline1, draw=True)
         pg.draw.rect(self.screen, 'black', outline1, 1)
 
     def get_left_point(self) -> int:

@@ -47,7 +47,6 @@ class Machine(Sprite, ABC):
     ):
         super().__init__(xy=xy, image=image, sprite_groups=sprite_groups, z=Z_LAYERS['main'])
         self.tile_xy = (xy[0] // TILE_SIZE, xy[1] // TILE_SIZE)
-        print(xy, self.tile_xy)
 
         self.game_obj = game_obj
 
@@ -77,6 +76,11 @@ class Machine(Sprite, ABC):
             self.pipe_connections = {}
             
         self.active: bool = False if not save_data else save_data['active']
+
+    def add_to_inv(self, slot: InvSlot, item: str, amount: int=1) -> None:
+        if (item == slot.item or not slot.item) and slot.amount + amount <= slot.max_capacity:
+            slot.item = item
+            slot.amount += amount
 
     def init_ui(self, ui_cls: MachineUI) -> None:
         self.ui = ui_cls(machine=self) # not initializing self.ui until the machine variant (burner/electric) is determined

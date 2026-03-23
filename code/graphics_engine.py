@@ -1,21 +1,17 @@
 from __future__ import annotations
-from typing import Sequence
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from main import Main
-    from ui import UI
-    from procgen import ProcGen
+    from asset_manager import AssetManager
+    from proc_gen import ProcGen
     from sprite_manager import SpriteManager
     from chunk_manager import ChunkManager
-    from input_manager import Mouse
     from player import Player
     import numpy as np
     
 import pygame as pg
-from os import walk
-from os.path import join
-from math import ceil, floor, sin
 from random import randint
+from math import floor, ceil
 
 from settings import *
 from weather import Weather
@@ -24,23 +20,19 @@ class GraphicsEngine:
     def __init__(self, game_obj: Main):
         self.screen: pg.Surface = game_obj.screen
         self.cam: Camera = game_obj.cam
-        self.graphics: dict[str, pg.Surface] = game_obj.asset_manager.assets['graphics']
-        self.ui: UI = game_obj.ui
+        self.asset_manager: AssetManager = game_obj.asset_manager
         self.chunk_manager: ChunkManager = game_obj.chunk_manager
 
         self.sprite_manager: SpriteManager = game_obj.sprite_manager 
-
-        self.key_map: dict[int, int] = game_obj.input_manager.keyboard.key_map 
-
         self.player: Player = game_obj.player
-
-        proc_gen: ProcGen = game_obj.proc_gen
-        self.tile_map: np.ndarray = proc_gen.tile_map
-        self.names_to_ids: dict[str, int] = proc_gen.names_to_ids
-        self.ids_to_names: dict[int, str] = proc_gen.ids_to_names
-        self.current_biome: str = proc_gen.current_biome
-        self.biome_order: dict[str, int] = proc_gen.biome_order
-         
+        self.key_map: dict[int, int] = game_obj.input_manager.keyboard.key_map 
+        
+        self.tile_map: np.ndarray = game_obj.proc_gen.tile_map
+        self.names_to_ids: dict[str, int] = game_obj.proc_gen.names_to_ids
+        self.ids_to_names: dict[int, str] = game_obj.proc_gen.ids_to_names
+        self.current_biome: str = game_obj.proc_gen.current_biome
+        self.biome_order: dict[str, int] = game_obj.proc_gen.biome_order
+        
         self.terrain_graphics = TerrainGraphics(game_obj)
 
         self.tool_animation = ToolAnimation(self.screen, self.render_item_held)
@@ -52,9 +44,6 @@ class GraphicsEngine:
             'pickaxe': {'mining', 'fighting'},
             'axe': {'chopping', 'fighting'}
         }
-        # self.sprite_manager.<sprite group> -> self.<sprite_group>
-        for name, group in self.sprite_manager.all_groups.items():
-            setattr(self, name, group)
 
     def animate_sprite(self, spr: pg.sprite.Sprite, dt: float) -> None:
         if spr.state not in {'idle', 'mining', 'chopping'}:
@@ -140,7 +129,7 @@ class TerrainGraphics:
     def __init__(self, game_obj: Main):
         self.screen: pg.Surface = game_obj.screen
         self.cam_offset: pg.Vector2 = game_obj.cam.offset
-        self.graphics: dict[str, pg.Surface] = game_obj.asset_manager.assets['graphics']
+        self.asset_manager: AssetManager = game_obj.asset_manager
         
         self.chunk_manager: ChunkManager = game_obj.chunk_manager
 
@@ -153,7 +142,7 @@ class TerrainGraphics:
         self.player: Player = game_obj.player
 
         self.biome_x_offsets = {biome: self.biome_order[biome] * BIOME_WIDTH * TILE_SIZE for biome in self.biome_order.keys()}
-        self.biome_transition = BiomeTransition(self.graphics, self.render_bg_imgs)
+        self.biome_transition = BiomeTransition(self.asset_manager, self.render_bg_imgs)
         self.elev_data = self.get_elevation_data()
 
     def get_tile_type(self, x: int, y: int) -> str | None:
@@ -190,10 +179,9 @@ class TerrainGraphics:
         elev_data['landscape base'] = (bottom * TILE_SIZE) - (elev_data['range'] // 2.5)
         return elev_data
 
-    def render_bg_imgs(self, bg_type: str, current_biome: str, imgs_folder: dict[int, pg.Surface] = None) -> None:
+    def render_bg_imgs(self, bg_type: str, current_biome: str) -> None:
         base_y = self.elev_data['landscape base']
-        if not imgs_folder: # only provided for biome transitions
-            imgs_folder = self.graphics[self.current_biome][bg_type]
+        
         num_layers = len(imgs_folder)
         biome_x_offset = self.biome_x_offsets[self.current_biome]
 
@@ -264,8 +252,8 @@ class TerrainGraphics:
 
 class BiomeTransition:
     '''fade the new/old graphics in/out when crossing the border between biomes'''
-    def __init__(self, graphics: dict[str, list[pg.Surface]], render_bg_imgs: callable):
-        self.graphics = graphics
+    def __init__(self, asset_manager: AssetManager, render_bg_imgs: callable):
+        self.asset_manager = asset_manager
         self.render_bg_imgs = render_bg_imgs
 
         self.active = False

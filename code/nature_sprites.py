@@ -1,18 +1,17 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from physics_engine import PhysicsEngine
     from player import Player
+    from sprite_manager import SpriteManager
 
 import pygame as pg
 from random import randint, choice
-from math import sin, ceil
+from math import ceil
 
-from settings import RES, TOOLS, Z_LAYERS, GRAVITY
+from settings import Z_LAYERS
 from sprite_base_classes import Sprite
 from item_drop import ItemDrop
 from alarm import Alarm
-from ui import UI
 
 class Cloud(Sprite):
     def __init__(
@@ -48,7 +47,7 @@ class Tree(Sprite):
         z: int, 
         tree_map_xy: tuple[int, int] | list[int, int],  
         sprite_manager: SpriteManager,
-        save_data: dict[str, any]
+        save_data: dict[str, any] | None
     ):
         super().__init__(xy, image, sprite_groups, z)
         self.image = self.image.copy()
@@ -56,8 +55,7 @@ class Tree(Sprite):
 
         self.tree_map_xy = tree_map_xy if type(tree_map_xy) == tuple else tuple(tree_map_xy)
 
-        self.sprite_manager = sprite_manager
-        self.wood_image = sprite_manager.graphics['wood']
+        self.wood_image = sprite_manager.asset_manager.get_image('wood') # TODO: add tree variants
         self.tree_obj_map = sprite_manager.tree_map
         self.wood_sprite_groups = [
             getattr(sprite_manager, group) for group in (
@@ -106,7 +104,7 @@ class Tree(Sprite):
                 self.wood_image, 
                 Z_LAYERS['main'], 
                 self.wood_sprite_groups,
-                self.sprite_manager,
+                self.game_obj.sprite_manager,
                 pg.Vector2(randint(-1, 1), 1),
                 'wood'
             )

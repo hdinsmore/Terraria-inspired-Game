@@ -1,21 +1,17 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
+    from main import Main
+    from input_manager import Keyboard, Mouse
     import numpy as np
-    from player import Player
-    from physics_engine import PhysicsEngine
-    from input_manager import InputManager
-    from sprite_base import SpriteBase
-    from procgen import ProcGen
+    from physics_engine import SpriteMovement, CollisionMap
 
 import pygame as pg
-from os.path import join
 from random import choice, randint
-from itertools import islice
+import re
+from os.path import join
 
-from helper_functions import load_image, cls_name_to_str
-from settings import TILE_SIZE, TILES, TILE_REACH_RADIUS, TOOLS, FPS, Z_LAYERS, MAP_SIZE, RES, TREE_BIOMES, PRODUCTION, LOGISTICS, ITEMS_CAN_FLIP
-from player import Player
+from settings import TILE_SIZE, TOOLS, Z_LAYERS, RES, TREE_BIOMES, ITEMS_CAN_FLIP
 from mining import Mining
 from crafting import Crafting
 from wood_gathering import WoodGathering
@@ -23,7 +19,7 @@ from nature_sprites import Tree, Cloud
 from furnaces import BurnerFurnace, ElectricFurnace
 from drills import BurnerDrill, ElectricDrill
 from pipe import Pipe
-from inserter import BurnerInserter, ElectricInserter, LongHandedInserter
+from inserter import BurnerInserter, ElectricInserter
 from assembler import Assembler
 from pumps import InletPump, OutletPump
 
@@ -34,30 +30,27 @@ class SpriteManager:
         self.screen: pg.Surface = game_obj.screen
         self.cam_offset: pg.Vector2 = game_obj.cam.offset
 
-        self.assets: dict[str, dict[str, pg.Surface]] = game_obj.asset_manager.assets
-        self.graphics: dict[str, pg.Surface] = self.assets['graphics']
+        self.asset_manager = game_obj.asset_manager
 
-        proc_gen: ProcGen = game_obj.proc_gen
-        self.tile_map = proc_gen.tile_map
-        self.tree_map = proc_gen.tree_map
-        self.height_map = proc_gen.height_map
-        self.current_biome = proc_gen.current_biome
-        self.names_to_ids, self.ids_to_names = proc_gen.names_to_ids, proc_gen.ids_to_names
-        self.get_tile_material = proc_gen.get_tile_material
+        self.tile_map: np.ndarray = game_obj.proc_gen.tile_map
+        self.tree_map: np.ndarray = game_obj.proc_gen.tree_map
+        self.height_map: np.ndarray = game_obj.proc_gen.height_map
+        self.current_biome: str = game_obj.proc_gen.current_biome
+        self.names_to_ids: dict[str, int] = game_obj.proc_gen.names_to_ids
+        self.ids_to_names: dict[int, str] = game_obj.proc_gen.ids_to_names
+        self.get_tile_material: callable = game_obj.proc_gen.get_tile_material
 
-        physics_engine: PhysicsEngine = game_obj.physics_engine
-        self.sprite_movement = physics_engine.sprite_movement
-        self.collision_map = physics_engine.collision_map
+        self.sprite_movement: SpriteMovement = game_obj.physics_engine.sprite_movement
+        self.collision_map: CollisionMap = game_obj.physics_engine.collision_map
 
-        input_manager = game_obj.input_manager
-        self.keyboard, self.mouse = input_manager.keyboard, input_manager.mouse
+        self.keyboard: Keyboard = game_obj.input_manager.keyboard
+        self.mouse: Mouse = game_obj.input_manager.mouse
 
         self.save_data: dict[str, any] | None = game_obj.save_data
 
         self.all_sprites = pg.sprite.Group()
         self.active_sprites = pg.sprite.Group() # has an update method
         self.animated_sprites = pg.sprite.Group()
-        self.player_sprite = pg.sprite.GroupSingle()
         self.colonist_sprites = pg.sprite.Group()
         self.mech_sprites = pg.sprite.Group()
         self.nature_sprites = pg.sprite.Group()
@@ -74,22 +67,21 @@ class SpriteManager:
         self.init_trees()
 
         self.items_init_when_placed = {
-            cls_name_to_str(cls): cls for cls in (
+            self.cls_name_to_str(cls): cls for cls in (
                 BurnerFurnace, ElectricFurnace, BurnerDrill, ElectricDrill, Pipe, BurnerInserter, 
                 ElectricInserter, Assembler, InletPump, OutletPump
             )
         }
 
-        self.ui = self.item_placement = self.player = None # not initialized until after the sprite manager
+        self.ui = self.player = None # not initialized yet
     
     def init_trees(self) -> None:
         if self.current_biome in TREE_BIOMES:
-            image_folder = self.graphics[self.current_biome]['trees']
-            tree_map = self.tree_map if not self.save_data else self.save_data['tree map']
-            for i, xy in enumerate(tree_map): 
+            images = list(self.asset_manager.load_folder(join('..', 'graphics', 'terrain', 'trees', self.current_biome)).values())
+            for i, xy in enumerate(self.tree_map if not self.save_data else self.save_data['tree map']): 
                 Tree(
                     xy=(pg.Vector2(xy) * TILE_SIZE) - self.cam_offset, 
-                    image=choice(image_folder), 
+                    image=choice(images), 
                     sprite_groups=[self.all_sprites, self.nature_sprites, self.tree_sprites], 
                     z=Z_LAYERS['bg'], 
                     tree_map_xy=xy,
@@ -102,7 +94,7 @@ class SpriteManager:
     def init_placed_items(self) -> None:
         for item, tiles_covered in self.item_placement.items(): 
             for xy in tiles_covered:
-               self.items_init_when_placed[item](**self.get_cls_init_params(name, xy))
+               self.items_init_when_placed[item](**self.get_cls_init_params(item, xy))
 
     def update_clouds(self, player: pg.sprite.Sprite) -> None:
         if not self.cloud_sprites:
@@ -142,15 +134,21 @@ class SpriteManager:
                 obj.kill()
                 return
 
-    def get_sprites_in_radius(self, rect: pg.Rect, group: pg.sprite.Group, x_dist: int=(RES[0] // 2), y_dist: int=(RES[1] // 2)) -> list[pg.sprite.Sprite]:
+    def get_sprites_in_radius(
+            self, 
+            rect: pg.Rect, 
+            group: pg.sprite.Group, 
+            x_dist: int=(RES[0] // 2), 
+            y_dist: int=(RES[1] // 2)
+        )-> list[pg.sprite.Sprite]:
         return [spr for spr in group if self.rect_in_sprite_radius(spr, rect, x_dist, y_dist)]
     
     def rect_in_sprite_radius(
         self, 
         spr: pg.sprite.Sprite, 
         rect: pg.Rect, 
-        x_dist: int=(RES[0] // 2), 
-        y_dist: int=(RES[1] // 2), 
+        x_dist: int, 
+        y_dist: int, 
         spr_world_space: bool=True, 
         rect_world_space: bool=True
     ) -> bool:
@@ -187,6 +185,10 @@ class SpriteManager:
             if name in ITEMS_CAN_FLIP:
                 params['direction'] = self.player.item_flip_dir
         return params
+    
+    @staticmethod
+    def cls_name_to_str(cls: pg.sprite.Sprite) -> str:
+        return re.sub(r'(?<!^)(?=[A-Z])', ' ', cls.__name__).lower()
 
     def update(self, player: pg.sprite.Sprite, dt: float) -> None:
         for sprite in self.active_sprites:

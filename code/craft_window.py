@@ -12,9 +12,7 @@ class CraftWindow:
     def __init__(self, ui: UI, craft_item: callable):
         self.screen = ui.screen
         self.cam_offset = ui.cam_offset
-        self.graphics = ui.assets['graphics']
-        self.fonts = ui.assets['fonts']
-        self.colors = ui.assets['colors']
+        self.asset_manager = ui.asset_manager
 
         self.mouse = ui.mouse
         self.player = ui.player
@@ -60,9 +58,7 @@ class CategoryGrid:
     def __init__(self, craft_window: CraftWindow):
         self.screen = craft_window.screen
         self.cam_offset = craft_window.cam_offset
-        self.graphics = craft_window.graphics
-        self.fonts = craft_window.fonts
-        self.colors = craft_window.colors 
+        self.asset_manager = craft_window.asset_manager 
 
         self.mouse = craft_window.mouse
         
@@ -185,17 +181,21 @@ class CategoryGrid:
 class ItemGrid:
     def __init__(self, craft_window: CraftWindow, top_pt: int, craft_item: callable):
         self.craft_window = craft_window
+        self.top_pt = top_pt
+        self.craft_item = craft_item
+
         self.mouse = craft_window.mouse
         self.screen = craft_window.screen
-        self.graphics = craft_window.graphics
+        self.asset_manager = craft_window.asset_manager
         self.window_outline_rect = craft_window.outline_rect
+
         self.categories = craft_window.category_grid.categories
+
         self.player = craft_window.player
+
         self.gen_outline = craft_window.gen_outline
         self.render_inv_item_name = craft_window.render_inv_item_name
         self.get_scaled_image = craft_window.get_scaled_image
-        self.craft_item = craft_item
-        self.top_pt = top_pt
         
         self.cell_width = self.cell_height = TILE_SIZE * 2
         self.x_cells = self.window_outline_rect.width // self.cell_width

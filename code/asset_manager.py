@@ -1,97 +1,65 @@
 import pygame as pg
-from os.path import join
-
-from settings import BIOMES, TREE_BIOMES, TILES, RAMP_TILES, TOOLS, PRODUCTION, LOGISTICS, ELECTRICITY, MATERIALS, PIPE_TRANSPORT_DIRS, TILE_SIZE
-from helper_functions import load_image, load_folder, load_subfolders, load_frames
+from os.path import join, isfile, isdir
+from os import walk, listdir
 
 class AssetManager:
     def __init__(self):
-        self.assets = {
-            'graphics': {
-                'clouds': load_folder(join('..', 'graphics', 'weather', 'clouds')), 
-                'consumables': load_subfolders(join('..', 'graphics', 'consumables')), 
-                'decor': load_subfolders(join('..', 'graphics', 'decor')), 
-                'icons': load_folder(join('..', 'graphics', 'ui', 'icons')), 
-                'minerals': load_subfolders(join('..', 'graphics', 'minerals')),
-                'player frames': load_subfolders(join('..', 'graphics', 'player')),
-                'ramps': load_folder(join('..', 'graphics', 'terrain', 'tiles', 'ramps')), 
-                'research': load_folder(join('..', 'graphics', 'research')), 
-                'storage': load_folder(join('..', 'graphics', 'storage')), 
-                'tools': load_folder(join('..', 'graphics', 'tools')), 
-                'transport dirs': load_folder(join('..', 'graphics', 'ui', 'transport directions')), 
-                'ui': load_folder(join('..', 'graphics', 'ui'))
-            },
-            'fonts': {
-                'default': pg.font.Font(join('..', 'graphics', 'fonts', 'Good Old DOS.ttf')), 
-                'craft menu category': pg.font.Font(join('..', 'graphics', 'fonts', 'C&C.ttf'), size=14), 
-                'item label': pg.font.Font(join('..', 'graphics', 'fonts', 'C&C.ttf'), size=16), 
-                'item label small': pg.font.Font(join('..', 'graphics', 'fonts', 'C&C.ttf'), size=13), 
-                'number': pg.font.Font(join('..', 'graphics', 'fonts', 'PKMN RBYGSC.ttf'), size=8)
-            },
-            'colors': {'outline bg': 'gray18', 'text': 'ivory4', 'ui bg highlight': 'lavender', 'progress bar': 'gray18'}, 
+        self.graphics_folders_loaded_at_runtime = {'backgrounds', 'player', 'terrain', 'weather'} 
+        self.graphics = {
+            subfolder: self.load_subfolders(join('..', 'graphics', subfolder)) 
+            for subfolder in listdir(join('..', 'graphics'))
         }
-        self.graphics = self.assets['graphics']
+        print(self.graphics)
 
-        for surf in self.graphics['transport dirs'].values():
-            surf.set_alpha(100)
-            
-        self.load_remaining_graphics()
+        self.fonts = {
+            'default': pg.font.Font(join('..', 'graphics', 'fonts', 'Good Old DOS.ttf')), 
+            'craft menu category': pg.font.Font(join('..', 'graphics', 'fonts', 'C&C.ttf'), size=14), 
+            'item label': pg.font.Font(join('..', 'graphics', 'fonts', 'C&C.ttf'), size=16), 
+            'item label small': pg.font.Font(join('..', 'graphics', 'fonts', 'C&C.ttf'), size=13), 
+            'number': pg.font.Font(join('..', 'graphics', 'fonts', 'PKMN RBYGSC.ttf'), size=8)
+        }
 
-    def load_biome_graphics(self) -> None:
-        for biome in BIOMES:
-            self.graphics[biome] = {
-                'landscape': load_folder(join('..', 'graphics', 'backgrounds', biome, 'landscape')), 
-                'underground': load_folder(join('..', 'graphics', 'backgrounds', biome, 'underground'))
-            }
-            if biome in TREE_BIOMES:
-                self.graphics[biome]['trees'] = load_folder(join('..', 'graphics', 'terrain', 'trees', biome))
+        self.colors = {
+            'outline bg': 'gray18', 
+            'text': 'ivory4', 
+            'ui bg highlight': 'lavender', 
+            'progress bar': 'gray18'
+        } 
 
-    def load_tile_graphics(self) -> None:
-        for tile in [*TILES.keys(), 'water']:
-            self.graphics[tile] = load_image(join('..', 'graphics', 'terrain', 'tiles', f'{tile}.png'))
-        self.graphics['water'].set_alpha(80)
-        for tile in RAMP_TILES:
-            self.graphics[tile] = load_image(join('..', 'graphics', 'terrain', 'tiles', 'ramps', f'{tile}.png'))
-
-    def load_tool_graphics(self) -> None:
-        for tool in TOOLS.keys():
-            self.graphics[tool] = load_folder(join('..', 'graphics', 'tools', f'{tool}' + ('s' if tool != 'torch' else 'es')))
-            for tool_type in self.graphics[tool]:
-                self.graphics[tool_type] = self.graphics[tool][tool_type]
-
-    def load_production_graphics(self) -> None:
-        for name in PRODUCTION:
-            if name in {'assembler', 'boiler', 'steam engine'}: # not stored in a folder of related graphics:
-                self.graphics[name] = load_image(join('..', 'graphics', 'production', f'{name}.png'))
-            else:
-                self.graphics[name] = load_image(join('..', 'graphics', 'production', f'{name.split()[-1]}s', f'{name}.png'))
+    @staticmethod
+    def load_image(dir_path: str, alpha: bool=True) -> pg.Surface:
+        return pg.image.load(dir_path).convert_alpha() if alpha else pg.image.load(dir_path).convert()
     
-    def load_logistics_graphics(self) -> None:
-        for name in LOGISTICS:
-            if 'pump' in name:
-                self.graphics[name] = load_image(join('..', 'graphics', 'logistics', f'{name}.png'))
-            else:
-                category = name.split()[-1] + 's'
-                if category != 'pipes':
-                    folder = load_folder(join('..', 'graphics', 'logistics', category))
-                    for name in folder:
-                        self.graphics[name] = load_image(join('..', 'graphics', 'logistics', f'{category}', f'{name}.png'))
-                else:
-                    for i in range(len(PIPE_TRANSPORT_DIRS)):
-                        self.graphics[f'pipe {i}'] = load_image(join('..', 'graphics', 'logistics', 'pipes', f'pipe {i}.png'))
-                        self.graphics[f'pipe {i}'].set_colorkey(self.graphics[f'pipe {i}'].get_at((0, 0))) # not sure why the pipes are the only graphics convert_alpha() isn't working on...
+    def load_folder(self, dir_path: str) -> dict[str, pg.Surface]:
+        images = {}
+        for path, _, files in walk(dir_path):    
+            for file_name in files:
+                key = file_name.split('.')[0] # not reassigning 'file_name' because it needs the file extension when passed to load_image()
+                images[int(key) if key.isnumeric() else key] = self.load_image(join(path, file_name))
+        return images
+    
+    def load_frames(self, dir_path: str) -> list[pg.Surface]:
+        frames = []
+        # remove the file extension to sort from 0 to n
+        for path, _, files in walk(dir_path):   
+            for file in sorted(files, key=lambda name: int(name.split('.')[0])): 
+                frames.append(self.load_image(join(path, file)))
+        return frames
+    
+    def load_subfolders(self, dir_path: str, load_files: bool=False) -> dict[str, pg.Surface | None]:
+        graphics = {}
+        for name in listdir(dir_path):
+            path = join(dir_path, name)
+            root_subfolder = dir_path.split('\\')[2] # get the name of the first subfolder within the graphics folder (index 2 from ['..', 'graphics', <name>, ...])
+            if isdir(path):
+                graphics[name] = self.load_subfolders(path, load_files=root_subfolder in self.graphics_folders_loaded_at_runtime)
+            elif isfile(path):
+                name = name.split('.')[0]
+                graphics[int(name) if name.isnumeric() else name] = self.load_image(path) if load_files else None # converting name to an int if it's numeric to loop through frames for animations
+        return graphics
+        
+    def get_image(self, file_name: str) -> pg.Surface:
+        pass
 
-    def load_material_graphics(self) -> None:
-        for material in MATERIALS.keys():
-            try:
-                self.graphics[material] = load_image(join('..', 'graphics', 'materials', f'{material}.png'))
-            except FileNotFoundError:
-                pass
-
-    def load_remaining_graphics(self) -> None:
-        self.load_biome_graphics()
-        self.load_tile_graphics()
-        self.load_tool_graphics()
-        self.load_production_graphics()
-        self.load_logistics_graphics()
-        self.load_material_graphics()
+    def get_folder(self, dir_path: str) -> dict[str, pg.Surface]:
+        pass

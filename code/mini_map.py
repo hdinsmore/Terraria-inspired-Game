@@ -10,19 +10,18 @@ import numpy as np
 from settings import MAP_SIZE, TILE_SIZE, TILES
 
 class MiniMap:
-    def __init__(self, game_obj: Main, ui: UI): # keep ui as a parameter, Main doesn't have UI as a class attribute yet since UI instantiates MiniMap
-        self.screen = game_obj.screen
-        self.cam_offset = game_obj.cam.offset
-        
-        proc_gen = game_obj.proc_gen
-        self.tile_map = proc_gen.tile_map
-        self.names_to_ids = proc_gen.names_to_ids
-        self.ids_to_names = proc_gen.ids_to_names
-        
-        self.get_tile_material = game_obj.sprite_manager.mining.get_tile_material
+    def __init__(self, game_obj: Main, ui: UI): # keep ui as a parameter, Main doesn't have UI as an attribute yet (UI instantiates MiniMap)
+        self.screen: pg.Surface = game_obj.screen
+        self.cam_offset: pg.Vector2 = game_obj.cam.offset
 
-        self.gen_outline = ui.gen_outline
-        self.save_data = ui.save_data
+        self.tile_map: np.ndarray = game_obj.proc_gen.tile_map
+        self.names_to_ids: dict[str, int] = game_obj.proc_gen.names_to_ids
+        self.ids_to_names: dict[int, str] = game_obj.proc_gen.ids_to_names
+
+        self.get_tile_material: callable = None # SpriteManager isn't instantiated yet
+
+        self.gen_outline: callable = ui.gen_outline
+        self.save_data: dict[str, any] | None = ui.save_data
 
         self.visited_tiles = np.array(self.save_data['visited tiles']) if self.save_data else np.full(MAP_SIZE, False, dtype = bool)
         self.update_radius = 6

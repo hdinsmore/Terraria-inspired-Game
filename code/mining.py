@@ -4,8 +4,7 @@ if TYPE_CHECKING:
     from sprite_manager import SpriteManager
     import numpy as np
     from player import Player
-    from mouse import Mouse
-    from keyboard import Keyboard
+    from input_manager import Mouse, Keyboard
 
 import pygame as pg
 

@@ -1,8 +1,10 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Sequence
 if TYPE_CHECKING:
+    from main import Main
     import procgen as ProcGen
     from input_manager import Keyboard
+    import numpy as np
     
 import pygame as pg
 from math import ceil

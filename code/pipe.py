@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from main import Main
+    from inserter import Inserter
 
 import pygame as pg
 import numpy as np
@@ -21,11 +22,11 @@ class Pipe(TransportSprite):
         variant_idx: int
     ):
         super().__init__(xy, image, Z_LAYERS['main'], sprite_groups, game_obj, save_data)
-        self.names_to_ids: dict[str, int] = game_obj.names_to_ids
+        self.names_to_ids: dict[str, int] = game_obj.proc_gen.names_to_ids
         self.variant_idx = variant_idx
         
         self.speed_factor = 1
-        self.alarms = {'move item': Alarm(2000 / self.speed_factor, self.transport, True, True)}
+        self.alarms = {'move item': Alarm(2000 * self.speed_factor, self.transport, True, True)}
         self.transport_dir = None
         self.get_connected_objs()
 
@@ -90,11 +91,11 @@ class Pipe(TransportSprite):
 
     def render_transport_ui(self) -> None:
         if self.variant_idx <= 5:
-            dir_surf = self.dir_ui[self.xy_to_cardinal[self.variant_idx][self.transport_dir]]
+            dir_surf = self.dir_ui[self.xy_to_dir[self.variant_idx][self.transport_dir]]
             self.screen.blit(dir_surf, dir_surf.get_frect(center=self.rect.center - self.cam_offset))
         else:
             for axis in ('horizontal', 'vertical'):
-                dir_surf = self.dir_ui[self.xy_to_cardinal[self.variant_idx][self.transport_dir[axis]]]
+                dir_surf = self.dir_ui[self.xy_to_dir[self.variant_idx][self.transport_dir[axis]]]
                 self.screen.blit(dir_surf, dir_surf.get_rect(center=self.rect.center - self.cam_offset))
 
         if self.item_holding:
@@ -102,7 +103,7 @@ class Pipe(TransportSprite):
             self.screen.blit(item_surf, item_surf.get_rect(center=self.rect.center - self.cam_offset))
 
     def extract_item(self) -> None:
-        if self.mouse.buttons_pressed['left'] and self.mouse.tile_xy == self.tile_xy and \
+        if self.mouse.buttons_pressed['left'] and self.mouse.xy_world_tile == self.tile_xy and \
         (not self.player.item_holding or self.player.item_holding == self.item_holding):
             self.player.inventory.add_item(self.item_holding)
             self.player.item_holding = self.item_holding

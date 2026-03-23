@@ -1,11 +1,12 @@
 import pygame as pg
 import sys
 import os
+from os.path import join
 import json
 from collections import defaultdict
 
 from settings import RES, FPS, MAP_SIZE, MAP_SIZE, TILE_SIZE
-from procgen import ProcGen
+from proc_gen import ProcGen
 from player import Player
 from graphics_engine import GraphicsEngine, Camera
 from asset_manager import AssetManager
@@ -15,7 +16,6 @@ from sprite_manager import SpriteManager
 from input_manager import InputManager
 from ui import UI
 from item_placement import ItemPlacement
-from helper_functions import cls_name_to_str
 
 class Main:
     def __init__(self):
@@ -30,40 +30,35 @@ class Main:
             player_save = self.save_data['sprites']['player'][0] # index 0 to get the dictionary within the list
             player_xy = player_save['xy']
 
+        self.asset_manager = AssetManager()
+
         self.cam = Camera(center=player_xy if self.save_data else (pg.Vector2(MAP_SIZE) * TILE_SIZE) // 2)
+
+        self.proc_gen = ProcGen(self)
+
+        self.chunk_manager = ChunkManager(self.cam.offset)
 
         self.input_manager = InputManager(self.cam)
 
-        self.proc_gen = ProcGen(self)
-        
-        self.asset_manager = AssetManager()
-
         self.physics_engine = PhysicsEngine(self)
-        
+
         self.sprite_manager = SpriteManager(self)
 
         self.player = Player( 
             self,
             player_xy if self.save_data else self.proc_gen.player_spawn_point,
-            self.asset_manager.assets['graphics']['player frames'],
-            [getattr(self.sprite_manager, group) for group in (
-                'all_sprites', 'player_sprite', 'active_sprites', 'colonist_sprites', 'animated_sprites'
-            )],
+            self.asset_manager.get_folder('player'),
+            [getattr(self.sprite_manager, group) for group in ('all_sprites', 'active_sprites', 'colonist_sprites', 'animated_sprites')],
             player_save if self.save_data else None
         )
         self.sprite_manager.player = self.player
 
-        self.ui = UI(self)
+        self.graphics_engine = GraphicsEngine(self)
+        
+        self.ui = UI(self) 
         self.sprite_manager.ui = self.ui
 
         self.item_placement = ItemPlacement(self)
-        self.sprite_manager.item_placement = self.item_placement
-        self.ui.inventory_ui.item_placement = self.item_placement
-        self.ui.inventory_ui.item_drag.item_placement = self.item_placement
-
-        self.chunk_manager = ChunkManager(self.cam.offset)
-
-        self.graphics_engine = GraphicsEngine(self)
 
     def make_save(self, file: str) -> None:
         visited_tiles = self.ui.mini_map.visited_tiles
@@ -80,7 +75,7 @@ class Main:
 
     def load_sprite_data(self, data: dict[str, list]) -> None:
         for sprite in [s for s in self.sprite_manager.all_sprites if hasattr(s, 'get_save_data')]:
-            data['sprites'][cls_name_to_str(sprite)].append(sprite.get_save_data())
+            data['sprites'][self.sprite_manager.cls_name_to_str(sprite)].append(sprite.get_save_data())
 
     def get_save_data(self) -> dict[str, list|dict] | None:
         data = None

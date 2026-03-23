@@ -23,7 +23,7 @@ class Player(Colonist):
         self.item_flip_dir = None 
         
         self.z = Z_LAYERS['player']
-        self.heart_surf = self.graphics['icons']['heart']
+        self.heart_surf = game_obj.asset_manager.get_image('heart')
         self.heart_width = self.heart_surf.get_width()
     
     def render_hearts(self) -> None:
