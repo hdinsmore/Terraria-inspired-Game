@@ -43,11 +43,10 @@ class Main:
         self.physics_engine = PhysicsEngine(self)
 
         self.sprite_manager = SpriteManager(self)
-
         self.player = Player( 
             self,
             player_xy if self.save_data else self.proc_gen.player_spawn_point,
-            self.asset_manager.get_folder('player'),
+            self.asset_manager.get_subfolder(join('..', 'graphics', 'player')),
             [getattr(self.sprite_manager, group) for group in ('all_sprites', 'active_sprites', 'colonist_sprites', 'animated_sprites')],
             player_save if self.save_data else None
         )
