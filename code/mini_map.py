@@ -14,40 +14,38 @@ class MiniMap:
         self.screen: pg.Surface = game_obj.screen
         self.cam_offset: pg.Vector2 = game_obj.cam.offset
 
-        self.tile_map: np.ndarray = game_obj.proc_gen.tile_map
-        self.names_to_ids: dict[str, int] = game_obj.proc_gen.names_to_ids
-        self.ids_to_names: dict[int, str] = game_obj.proc_gen.ids_to_names
-
-        self.get_tile_material: callable = None # SpriteManager isn't instantiated yet
-
         self.gen_outline: callable = ui.gen_outline
         self.save_data: dict[str, any] | None = ui.save_data
 
-        self.visited_tiles = np.array(self.save_data['visited tiles']) if self.save_data else np.full(MAP_SIZE, False, dtype = bool)
+        self.tile_map: np.ndarray = game_obj.proc_gen.tile_map
+        self.names_to_ids: dict[str, int] = game_obj.proc_gen.names_to_ids
+        self.ids_to_names: dict[int, str] = game_obj.proc_gen.ids_to_names
+        self.get_tile_material: callable = game_obj.proc_gen.get_tile_material
+        self.visited_tiles = np.array(self.save_data['visited tiles']) if self.save_data else np.full(MAP_SIZE, False, dtype=bool) 
+        self.terrain_tiles = TILES.keys()
+        self.non_tiles = {
+            'air': {'rgb': (227, 242, 253)}, 
+            'tree base': {'rgb': (56, 142, 60)},
+            'water': {'rgb': (30, 136, 229)},
+        }
+
         self.update_radius = 6
         self.tiles_x, self.tiles_y = 80, 80
         self.tile_px_w, self.tile_px_h = 2, 2
-        self.outline_w = self.tiles_x * self.tile_px_w
-        self.outline_h = self.tiles_y * self.tile_px_h
-        self.border_dist_x = self.tiles_x // 2
-        self.border_dist_y = self.tiles_y // 2
+        self.outline_w, self.outline_h = self.tiles_x * self.tile_px_w, self.tiles_y * self.tile_px_h
+        self.border_dist_x, self.border_dist_y = self.tiles_x // 2, self.tiles_y // 2
         self.padding = 5
         self.topleft = pg.Vector2(self.padding, self.padding)
         self.render = True
-        self.terrain_tiles = TILES.keys()
-        self.non_tiles = {
-            'air': {'rgb': (178, 211, 236)}, 
-            'tree base': {'rgb': (74, 54, 47)},
-            'water': {'rgb': (41, 80, 140)}
-        }
+
         self.tree_px_height = 8
         self.branch_y = self.tree_px_height // 2
 
     def render_outline(self) -> None:
         if self.render:
             base_rect = pg.Rect(*self.topleft, self.outline_w, self.outline_h)
-            outline1 = self.gen_outline(base_rect, draw = False, return_outline = True)
-            outline2 = self.gen_outline(outline1, draw = True)
+            outline1 = self.gen_outline(base_rect, draw=False, return_outline=True)
+            self.gen_outline(outline1, draw=True)
             pg.draw.rect(self.screen, 'black', outline1, 1)
 
     def render_tiles(self) -> None:

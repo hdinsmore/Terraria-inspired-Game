@@ -25,8 +25,9 @@ class Colonist(AnimatedSprite):
         move_speed: int=500,
         animation_speed: dict[str, int]={'walking': 8, 'mining': 4, 'jumping': 0},
         save_data: dict[str, any]=None
-    ):
+    ):  
         super().__init__(game_obj, xy, frames, sprite_groups, move_speed, animation_speed)
+        print('colonist frames', self.frames)
         self.spawn_point = xy
         self.asset_manager: AssetManager = game_obj.asset_manager
         self.sprite_manager: SpriteManager = game_obj.sprite_manager
@@ -43,16 +44,18 @@ class Colonist(AnimatedSprite):
         self.facing_left = save_data['facing left'] if save_data else True
         self.grounded = False
         self.default_gravity = self.gravity
-        self.default_jump_height, self.jump_height = 350, 350 
+        self.default_jump_height = self.jump_height = 350
 
         self.inventory = SpriteInventory(self, None if not save_data else save_data['inventory data'])
         self.item_holding = save_data['item holding'] if save_data else None
         self.arm_strength = 4
         
-        self.hp, self.max_hp = save_data['hp'] if save_data else 8, 8
-
+        self.max_hp = 8
+        self.hp = save_data['hp'] if save_data else self.max_hp
+        
         self.underwater = False
-        self.oxygen_lvl, self.max_oxygen_lvl = 8, 8
+        self.max_oxygen_lvl = 8
+        self.oxygen_lvl = save_data['oxygen lvl'] if save_data else self.max_oxygen_lvl
         self.oxygen_icon = self.asset_manager.get_image('oxygen')
         self.oxygen_icon_w, self.oxygen_icon_h = self.oxygen_icon.get_size()
 

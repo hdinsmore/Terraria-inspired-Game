@@ -1,12 +1,9 @@
 RES = (1280, 720)
 FPS = 60
-
 TILE_SIZE = 16
-CHUNK_SIZE = 24
-CELL_SIZE = 10
 MAP_SIZE = (3000, 200)
-WORLD_EDGE_RIGHT = (MAP_SIZE[0] * TILE_SIZE) - 19 # minus 19 to prevent going partially off-screen
-WORLD_EDGE_BOTTOM = MAP_SIZE[1] * TILE_SIZE
+MAX_PX_X = MAP_SIZE[0] * TILE_SIZE
+MAX_PX_Y = MAP_SIZE[1] * TILE_SIZE
 
 BIOMES = { 
     'highlands': {
@@ -66,19 +63,19 @@ BIOME_WIDTH = MAP_SIZE[0] // (len(BIOMES) - 1) # -1 since the underworld spans t
 TREE_BIOMES = {'forest', 'taiga'}
 
 TILES = {
-    'dirt': {'hardness': 100, 'rgb': (82, 71, 69)},
-    'ice': {'hardness': 200, 'rgb': (82, 71, 69)},
-    'sand': {'hardness': 100, 'rgb': (214, 188, 150)},
-    'clay': {'hardness': 150, 'rgb': (192, 136, 119)},
-    'stone': {'hardness': 300, 'rgb': (100, 100, 100)},
-    'desert fossil': {'hardness': 400, 'rgb': (173, 159, 139)},
-    'coal': {'hardness': 450, 'rgb': (37, 40, 41)},
-    'sandstone': {'hardness': 500, 'rgb': (162, 132, 88)},
-    'silver': {'ore': True, 'hardness': 500, 'rgb': (208, 213, 215)},
-    'copper': {'ore': True, 'hardness': 550, 'rgb': (158, 110, 61)},
-    'gold': {'ore': True, 'hardness': 600, 'rgb': (211, 178, 79)},
-    'iron': {'ore': True, 'hardness': 750, 'rgb': (146, 146, 146)},
-    'hellstone': {'hardness': 950, 'rgb': (132, 34, 34)},
+    'dirt': {'hardness': 100, 'rgb': (93, 64, 55)},
+    'ice': {'hardness': 200, 'rgb': (179, 229, 252)},
+    'sand': {'hardness': 100, 'rgb': (255, 224, 178)},
+    'clay': {'hardness': 150, 'rgb': (255, 138, 101)},
+    'stone': {'hardness': 300, 'rgb': (117, 117, 117)},
+    'desert fossil': {'hardness': 400, 'rgb': (243, 174, 113)},
+    'coal': {'hardness': 450, 'rgb': (66, 66, 66)},
+    'sandstone': {'hardness': 500, 'rgb': (255, 112, 67)},
+    'silver': {'ore': True, 'hardness': 500, 'rgb': (224, 224, 224)},
+    'copper': {'ore': True, 'hardness': 550, 'rgb': (245, 127, 23)},
+    'gold': {'ore': True, 'hardness': 600, 'rgb': (251, 192, 45)},
+    'iron': {'ore': True, 'hardness': 750, 'rgb': (251, 233, 231)},
+    'hellstone': {'hardness': 950, 'rgb': (191, 54, 12)},
     'obsidian': {'hardness': 1000, 'rgb': (32, 23, 43)},
 }
 
@@ -132,22 +129,21 @@ TOOLS = {
 }
 
 PRODUCTION = { # TODO: add crafting speeds
-    'burner furnace': {'recipe': {'stone': 7, 'wood torch': 1}, 'rgb': (47, 15, 15)}, 
-    'electric furnace': {'recipe': {'iron plate': 7, 'circuit': 4}, 'rgb': (49, 63, 71)},
-    'steel furnace': {'recipe': {'steel': 7, 'circuit': 4}, 'rgb': (84, 84, 84)},
-    'burner drill': {'recipe': {'iron plate': 7, 'iron gear': 5, 'burner furnace': 1}, 'rgb': (137, 126, 126)},
-    'electric drill': {'recipe': {'iron plate': 7, 'circuit': 5, 'electric furnace': 1}, 'rgb': (111, 122, 112)},
-    'assembler': {'recipe': {'iron plate': 10, 'iron gear': 5, 'circuit': 4}, 'rgb': (80, 74, 73)},
-    'boiler': {'recipe': {'iron plate': 8, 'pipe': 4, 'burner furnace': 1}, 'rgb': (38, 33, 31)}, 
-    'steam engine': {'recipe': {'iron plate': 12, 'pipe': 7}, 'rgb': (59, 35, 27)},
+    'burner furnace': {'recipe': {'stone': 7, 'wood torch': 1}, 'rgb': (230, 74, 25)}, 
+    'electric furnace': {'recipe': {'iron plate': 7, 'circuit': 4}, 'rgb': (249, 168, 37)},
+    'burner drill': {'recipe': {'iron plate': 7, 'iron gear': 5, 'burner furnace': 1}, 'rgb': (121, 85, 72)},
+    'electric drill': {'recipe': {'iron plate': 7, 'circuit': 5, 'electric furnace': 1}, 'rgb': (161, 136, 127)},
+    'assembler': {'recipe': {'iron plate': 10, 'iron gear': 5, 'circuit': 4}, 'rgb': (158, 158, 158)},
+    'boiler': {'recipe': {'iron plate': 8, 'pipe': 4, 'burner furnace': 1}, 'rgb': (244, 67, 54)}, 
+    'steam engine': {'recipe': {'iron plate': 12, 'pipe': 7}, 'rgb': (224, 224, 224)},
 }
 
 LOGISTICS = {
-    'burner inserter': {'recipe': {'iron plate': 5, 'iron gear': 3, 'wood torch': 1}, 'rgb': (47, 29, 29)}, 
-    'electric inserter': {'recipe': {'iron plate': 5, 'circuit': 3}, 'rgb': (118, 107, 107)},
-    'inlet pump': {'recipe': {'iron gear': 2, 'pipe 0': 3}, 'rgb': (87, 95, 104),},
-    'outlet pump': {'recipe': {'iron gear': 2, 'pipe 0': 3}, 'rgb': (100, 100, 100),},
-    'pipe': {'recipe': {'iron plate': 3}, 'rgb': (72, 92, 93),}, 
+    'burner inserter': {'recipe': {'iron plate': 5, 'iron gear': 3, 'wood torch': 1}, 'rgb': (76, 175, 80)}, 
+    'electric inserter': {'recipe': {'iron plate': 5, 'circuit': 3}, 'rgb': (102, 187, 106)},
+    'inlet pump': {'recipe': {'iron gear': 2, 'pipe 0': 3}, 'rgb': (3, 155, 229),},
+    'outlet pump': {'recipe': {'iron gear': 2, 'pipe 0': 3}, 'rgb': (3, 169, 224),},
+    'pipe': {'recipe': {'iron plate': 3}, 'rgb': (211, 47, 47),}, 
 }
 
 PIPE_TRANSPORT_DIRS = {

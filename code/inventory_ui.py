@@ -25,6 +25,7 @@ class InventoryUI:
     def __init__(self, ui: UI, game_obj: Main):  
         self.screen: pg.Surface = ui.screen
         self.cam_offset: pg.Vector2 = ui.cam_offset
+        self.asset_manager = ui.asset_manager
         self.top: int = ui.mini_map.outline_h + ui.mini_map.padding
 
         self.player: Player = ui.player
@@ -123,7 +124,7 @@ class InventoryUI:
                 pass
 
     def get_item_surf(self, name: str) -> pg.Surface:
-        surf = self.graphics[name]
+        surf = self.asset_manager.get_image(name)
         return surf if surf.get_size() == self.icon_size else self.get_scaled_image(surf, name, *self.icon_size)
 
     def update(self) -> None:

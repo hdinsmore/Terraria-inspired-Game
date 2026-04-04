@@ -10,6 +10,7 @@ class AssetManager:
             subfolder: self.load_subfolders(join('..', 'graphics', subfolder)) 
             for subfolder in listdir(join('..', 'graphics'))
         }
+
         self.fonts = {
             'default': pg.font.Font(join('..', 'graphics', 'fonts', 'Good Old DOS.ttf')), 
             'craft menu category': pg.font.Font(join('..', 'graphics', 'fonts', 'C&C.ttf'), size=14), 
@@ -68,21 +69,25 @@ class AssetManager:
             return self.image_lookup[name]['image']
 
     def get_subfolder(self, dir_path: str) -> dict[str, pg.Surface]:
-        folders = dir_path.split('\\')[2:] # ignore '..' and 'graphics'
-        # iterate through the graphics dictionary keys
-        graphics = self.graphics
-        for f in folders:
-            graphics = graphics.get(f)
-        if graphics is not None:
-            return graphics
-        return self.update_graphics_dict(folders[-1])
-    
-    def update_graphics_dict(self, folder_name: str, parent_folder: dict=None, dir_path: str=None) -> dict[str, pg.Surface]: # adding parent folder as a parameter to use the function recursively as it moves through self.graphics
-        folder_dir = parent_folder if parent_folder is not None else self.graphics
-        if folder_name in folder_dir:
-            folder_dir[folder_name] = self.load_folder(join('..', 'graphics', dir_path if dir_path is not None else folder_name))
-            return folder_dir[folder_name]
-        for k in folder_dir.keys():
-            folder = self.update_graphics_dict(folder_name, folder_dir[k], dir_path=join('..', 'graphics', k, folder_name))
-            if folder is not None:
-                return folder 
+        path = dir_path.split('\\')[2:] # ignore '..' and 'graphics'
+        target_folder = path[-1]
+        root_folder = path[0]
+        if root_folder not in self.graphics:
+            self.graphics[root_folder] = {}
+        else:
+            if target_folder == root_folder:
+                return self.graphics[root_folder]
+        current_folder = self.graphics[root_folder]
+        for folder_name in path:
+            if folder_name == target_folder:
+                if folder_name in current_folder:
+                    if not isinstance(current_folder[folder_name], dict):
+                        current_folder[folder_name] = self.load_folder(dir_path)
+                    return current_folder[folder_name]
+                else:
+                    current_folder[folder_name] = self.load_folder(dir_path)
+                    return current_folder[folder_name]
+            else:
+                if folder_name not in current_folder:
+                    current_folder[folder_name] = {}
+                current_folder = current_folder[folder_name]

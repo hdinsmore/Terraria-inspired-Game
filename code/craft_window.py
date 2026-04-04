@@ -128,7 +128,7 @@ class CategoryGrid:
                 self.render_category_names((left, top), category)
 
     def render_category_images(self, category: str, col: int, row: int) -> None:
-        image = self.graphics['icons'][category].copy()
+        image = self.asset_manager.graphics['icons'][category].copy()
         if category != self.selected_category:
             image.set_alpha(150)
         # get the space between the border of the image and the cell containing it

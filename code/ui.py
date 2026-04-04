@@ -109,7 +109,7 @@ class UI:
         bounding_box = (width - (padding * 2), height - (padding * 2))
         aspect_ratio = min(image.width / bounding_box[0], image.height / bounding_box[1]) # avoid stretching an image too wide/tall
         scale = (min(bounding_box[0], image.width * aspect_ratio), min(bounding_box[1], image.height * aspect_ratio))
-        return pg.transform.scale(self.assets['graphics'][item_name], scale)
+        return pg.transform.scale(image, scale)
 
     def get_grid_xy(self) -> pg.Vector2:
         return ((pg.Vector2(self.mouse.xy_world) // TILE_SIZE) * TILE_SIZE) - self.cam_offset

@@ -17,7 +17,7 @@ class Player(Colonist):
         frames: dict[str, pg.Surface],
         sprite_groups: list[pg.sprite.Sprite],
         save_data: dict[str, any],
-    ):
+    ):  
         super().__init__(game_obj, xy, frames, sprite_groups, save_data=save_data)
         self.inventory = PlayerInventory(self, None if not save_data else save_data['inventory data'])
         self.item_flip_dir = None 
@@ -25,6 +25,7 @@ class Player(Colonist):
         self.z = Z_LAYERS['player']
         self.heart_surf = game_obj.asset_manager.get_image('heart')
         self.heart_width = self.heart_surf.get_width()
+        self.gravity = 100
     
     def render_hearts(self) -> None:
         for i in range(self.hp):

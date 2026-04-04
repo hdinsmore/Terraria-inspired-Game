@@ -4,6 +4,8 @@ import os
 from os.path import join
 import json
 from collections import defaultdict
+import cProfile
+import pstats
 
 from settings import RES, FPS, MAP_SIZE, MAP_SIZE, TILE_SIZE
 from proc_gen import ProcGen
@@ -36,8 +38,6 @@ class Main:
 
         self.proc_gen = ProcGen(self)
 
-        self.chunk_manager = ChunkManager(self.cam.offset)
-
         self.input_manager = InputManager(self.cam)
 
         self.physics_engine = PhysicsEngine(self)
@@ -51,8 +51,11 @@ class Main:
             player_save if self.save_data else None
         )
         self.sprite_manager.player = self.player
-
+        
+        self.chunk_manager = ChunkManager(self)
+        
         self.graphics_engine = GraphicsEngine(self)
+        self.chunk_manager.get_mined_tile_img = self.graphics_engine.terrain_graphics.get_mined_tile_img 
         
         self.ui = UI(self) 
         self.sprite_manager.ui = self.ui
@@ -99,12 +102,19 @@ class Main:
             for event in pg.event.get():
                 if event.type == pg.QUIT or (event.type == pg.KEYDOWN and event.key == pg.K_ESCAPE):
                    # self.make_save('save.json')
-                    pg.quit()
-                    sys.exit()
-
+                    #pg.quit()
+                    #sys.exit()
+                    self.running = False
             self.update(self.clock.tick(FPS) / 1000)
             pg.display.flip()
+        pg.quit()
              
 if __name__ == '__main__':
+    #profiler = cProfile.Profile()
+    #profiler.enable()
     main = Main()
     main.run()
+    #profiler.disable()
+    #stats = pstats.Stats(profiler)
+    #stats.sort_stats('cumtime')  
+    #stats.print_stats(50)         

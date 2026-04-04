@@ -65,6 +65,7 @@ class SpriteManager:
         self.crafting = Crafting()
 
         self.init_trees()
+        self.cloud_graphics_folder = self.asset_manager.get_subfolder(join('..', 'graphics', 'weather', 'clouds'))
 
         self.items_init_when_placed = {
             self.cls_name_to_str(cls): cls for cls in (
@@ -100,11 +101,10 @@ class SpriteManager:
         if not self.cloud_sprites:
             surface_lvl = self.height_map[player.rect.x // TILE_SIZE]
             if player.rect.y // TILE_SIZE < surface_lvl:
-                img_folder = self.graphics['clouds']
                 for i in range(randint(10, 15)):
                     Cloud(
                         pg.Vector2(player.rect.x + RES[0] + (50 * (i + 1)), surface_lvl + randint(-2000, -1500)),
-                        img_folder[randint(0, len(img_folder) - 1)],
+                        self.cloud_graphics_folder[randint(0, len(self.cloud_graphics_folder) - 1)],
                         Z_LAYERS['clouds'],
                         [self.all_sprites, self.nature_sprites, self.cloud_sprites],
                         randint(1, 3),
