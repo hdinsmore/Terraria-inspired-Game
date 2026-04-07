@@ -1,16 +1,29 @@
 import pygame as pg
-from os.path import join, isfile, isdir
-from os import walk, listdir
+from os import walk
+from os.path import join
+from pathlib import Path
+from dataclasses import dataclass, field
+
+@dataclass
+class FolderDir:
+    files: dict[str, pg.Surface | None] = field(default_factory=dict)
+    subfolders: dict[str, "FolderDir"] = field(default_factory=dict)
+    loaded: bool = False
+
 
 class AssetManager:
     def __init__(self):
         self.graphics_folders_loaded_at_runtime = {'backgrounds', 'player', 'terrain', 'weather'} 
         self.image_lookup: dict[str, pg.Surface | None] = {}
+        self.graphics_dir_root = Path('..') / 'graphics'
         self.graphics = {
-            subfolder: self.load_subfolders(join('..', 'graphics', subfolder)) 
-            for subfolder in listdir(join('..', 'graphics'))
+            folder.name: self.load_subfolders(
+                dir_path=folder, 
+                load_files=folder.name in self.graphics_folders_loaded_at_runtime
+            )
+            for folder in self.graphics_dir_root.iterdir() if folder.is_dir()
         }
-
+        
         self.fonts = {
             'default': pg.font.Font(join('..', 'graphics', 'fonts', 'Good Old DOS.ttf')), 
             'craft menu category': pg.font.Font(join('..', 'graphics', 'fonts', 'C&C.ttf'), size=14), 
@@ -46,20 +59,13 @@ class AssetManager:
                 frames.append(self.load_image(join(path, file)))
         return frames
 
-    def load_subfolders(self, dir_path: str, load_files: bool=False) -> dict[str, pg.Surface | None]:
-        graphics = {}
-        for name in listdir(dir_path):
-            path = join(dir_path, name)
-            root_subfolder = dir_path.split('\\')[2] # get the name of the first subfolder within the graphics folder (index 2 from ['..', 'graphics', <name>, ...])
-            if isdir(path):
-                graphics[name] = self.load_subfolders(path, load_files=root_subfolder in self.graphics_folders_loaded_at_runtime)
-            elif isfile(path):
-                name = name.split('.')[0]
-                if name.isnumeric():
-                    name = int(name) # converting name to an int if it's numeric to loop through frames for animations
-                graphics[name] = self.load_image(path) if load_files else None 
-                self.image_lookup[name] = {'image': graphics[name], 'dir path': path}
-        return graphics
+    def load_subfolders(self, dir_path: str, load_files: bool=False) -> FolderDir:
+        folder_dir = FolderDir(loaded=load_files)
+        if load_files:
+            folder_dir.files = self.load_folder(dir_path)
+        for folder in (f for f in dir_path.iterdir() if f.is_dir()):
+            folder_dir.subfolders[folder.name] = self.load_subfolders(folder, load_files)
+        return folder_dir
 
     def get_image(self, name: str) -> pg.Surface:
         if self.image_lookup.get(name, {}).get('image') is not None:
@@ -68,26 +74,14 @@ class AssetManager:
             self.image_lookup[name]['image'] = self.load_image(self.image_lookup[name]['dir path'])
             return self.image_lookup[name]['image']
 
-    def get_subfolder(self, dir_path: str) -> dict[str, pg.Surface]:
-        path = dir_path.split('\\')[2:] # ignore '..' and 'graphics'
-        target_folder = path[-1]
-        root_folder = path[0]
-        if root_folder not in self.graphics:
-            self.graphics[root_folder] = {}
-        else:
-            if target_folder == root_folder:
-                return self.graphics[root_folder]
-        current_folder = self.graphics[root_folder]
-        for folder_name in path:
-            if folder_name == target_folder:
-                if folder_name in current_folder:
-                    if not isinstance(current_folder[folder_name], dict):
-                        current_folder[folder_name] = self.load_folder(dir_path)
-                    return current_folder[folder_name]
-                else:
-                    current_folder[folder_name] = self.load_folder(dir_path)
-                    return current_folder[folder_name]
-            else:
-                if folder_name not in current_folder:
-                    current_folder[folder_name] = {}
-                current_folder = current_folder[folder_name]
+    def get_folder(self, dir_path: str) -> FolderDir:
+        if not isinstance(dir_path, Path):
+            dir_path = Path(dir_path)
+        folders = dir_path.relative_to(self.graphics_dir_root).parts
+        current_folder = self.graphics[folders[0]]
+        for folder in folders[1:]: # excluding the current folder
+            current_folder = current_folder.subfolders[folder]
+        if not current_folder.loaded:
+            current_folder.files = self.load_folder(dir_path)
+            current_folder.loaded = True
+        return current_folder
